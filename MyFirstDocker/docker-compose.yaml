@@ -1,0 +1,70 @@
+version: '3'
+services:
+
+  ngnix.router:
+    image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+    networks:
+      - homeworkNetwork
+    depends_on:
+      - api.node
+      - api.php
+      - db.mysql
+      - db.pma
+      - front.homework.public
+      - front.homework.administrator
+
+  front.homework.public:
+    container_name: front.homework.public
+    build: ./front/public
+    networks:
+      - homeworkNetwork
+
+  front.homework.administrator:
+    container_name: front.homework.administrator
+    build: ./front/admin
+    networks:
+      - homeworkNetwork
+
+  api.php:
+    build: ./backend/php_api
+    volumes:
+      - './backend/php_api/src:/app'
+    ports:
+      - 8000:8000
+    networks:
+      - homeworkNetwork
+
+  api.node:
+    build: ./backend/nodejs_api
+    ports:
+      - 3000:3000
+    networks:
+      - homeworkNetwork
+
+  db.mysql:
+    container_name: db.mysql
+    image: mysql
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env
+    networks:
+      - homeworkNetwork    
+
+  db.pma:
+    image: phpmyadmin
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db.mysql
+    networks:
+      - homeworkNetwork
+
+networks:
+  homeworkNetwork:
+    driver: bridge
